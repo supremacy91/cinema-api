@@ -93,9 +93,22 @@ class MovieImageSerializer(serializers.ModelSerializer):
 
 
 class MovieSessionSerializer(serializers.ModelSerializer):
+    def validate_show_time(self, value):
+        if value <= timezone.now():
+            raise serializers.ValidationError(
+                "Movie session cannot be scheduled in the past."
+            )
+
+        return value
+
     class Meta:
         model = MovieSession
-        fields = ("id", "show_time", "movie", "cinema_hall")
+        fields = (
+            "id",
+            "show_time",
+            "movie",
+            "cinema_hall",
+        )
 
 
 class MovieSessionListSerializer(MovieSessionSerializer):
