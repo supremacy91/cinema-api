@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -123,13 +124,27 @@ class MovieSessionListSerializer(MovieSessionSerializer):
 
 class TicketSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
-        data = super(TicketSerializer, self).validate(attrs=attrs)
+        data = super().validate(attrs)
+
+        movie_session = attrs["movie_session"]
+
+        if movie_session.show_time <= timezone.now():
+            raise serializers.ValidationError(
+                {
+                    "movie_session": (
+                        "You cannot buy a ticket for a movie session "
+                        "that has already started."
+                    )
+                }
+            )
+
         Ticket.validate_ticket(
             attrs["row"],
             attrs["seat"],
-            attrs["movie_session"].cinema_hall,
-            ValidationError
+            movie_session.cinema_hall,
+            ValidationError,
         )
+
         return data
 
     class Meta:
